@@ -24,6 +24,10 @@ def kb(rows):
     return ReplyKeyboardMarkup(rows, resize_keyboard=True, one_time_keyboard=True)
 
 
+async def send(update, text, reply_markup=None):
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
+
+
 async def start(update, context):
     context.user_data.clear()
     keyboard = [
@@ -39,48 +43,48 @@ async def set_language(update, context):
     await query.answer()
     lang = query.data.split("_")[1]
     context.user_data["lang"] = lang
-    await query.edit_message_text(t(context, "welcome"))
-    await query.message.reply_text(t(context, "ask_name"), reply_markup=ReplyKeyboardRemove())
+    await query.edit_message_text(t(context, "welcome"), parse_mode="HTML")
+    await query.message.reply_text(t(context, "ask_name"), reply_markup=ReplyKeyboardRemove(), parse_mode="HTML")
     return NAME
 
 
 async def get_name(update, context):
     context.user_data["name"] = update.message.text.strip()
     rows = [[t(context, "site_corp"), t(context, "site_landing")], [t(context, "site_eshop"), t(context, "site_other")]]
-    await update.message.reply_text(t(context, "ask_site_type").format(name=context.user_data["name"]), reply_markup=kb(rows))
+    await send(update, t(context, "ask_site_type").format(name=context.user_data["name"]), kb(rows))
     return SITE_TYPE
 
 
 async def get_site_type(update, context):
     context.user_data["site_type"] = update.message.text.strip()
-    await update.message.reply_text(t(context, "ask_goal"), reply_markup=ReplyKeyboardRemove())
+    await send(update, t(context, "ask_goal"), ReplyKeyboardRemove())
     return GOAL
 
 
 async def get_goal(update, context):
     context.user_data["goal"] = update.message.text.strip()
     rows = [[t(context, "pages_1"), t(context, "pages_2_5")], [t(context, "pages_5_10"), t(context, "pages_10_plus")], [t(context, "pages_unknown")]]
-    await update.message.reply_text(t(context, "ask_pages"), reply_markup=kb(rows))
+    await send(update, t(context, "ask_pages"), kb(rows))
     return PAGES
 
 
 async def get_pages(update, context):
     context.user_data["pages"] = update.message.text.strip()
     rows = [[t(context, "design_have"), t(context, "design_need")], [t(context, "design_inspiration")]]
-    await update.message.reply_text(t(context, "ask_design"), reply_markup=kb(rows))
+    await send(update, t(context, "ask_design"), kb(rows))
     return DESIGN
 
 
 async def get_design(update, context):
     context.user_data["design"] = update.message.text.strip()
     rows = [[t(context, "content_have"), t(context, "content_partial")], [t(context, "content_need")]]
-    await update.message.reply_text(t(context, "ask_content"), reply_markup=kb(rows))
+    await send(update, t(context, "ask_content"), kb(rows))
     return CONTENT
 
 
 async def get_content(update, context):
     context.user_data["content"] = update.message.text.strip()
-    await update.message.reply_text(t(context, "ask_examples"), reply_markup=kb([[t(context, "skip")]]))
+    await send(update, t(context, "ask_examples"), kb([[t(context, "skip")]]))
     return EXAMPLES
 
 
@@ -88,19 +92,19 @@ async def get_examples(update, context):
     txt = update.message.text.strip()
     context.user_data["examples"] = "" if txt == t(context, "skip") else txt
     rows = [[t(context, "deadline_asap"), t(context, "deadline_month")], [t(context, "deadline_2_3"), t(context, "deadline_flex")]]
-    await update.message.reply_text(t(context, "ask_deadline"), reply_markup=kb(rows))
+    await send(update, t(context, "ask_deadline"), kb(rows))
     return DEADLINE
 
 
 async def get_deadline(update, context):
     context.user_data["deadline"] = update.message.text.strip()
-    await update.message.reply_text(t(context, "ask_contact"), reply_markup=ReplyKeyboardRemove())
+    await send(update, t(context, "ask_contact"), ReplyKeyboardRemove())
     return CONTACT
 
 
 async def get_contact(update, context):
     context.user_data["contact"] = update.message.text.strip()
-    await update.message.reply_text(t(context, "ask_notes"), reply_markup=kb([[t(context, "skip")]]))
+    await send(update, t(context, "ask_notes"), kb([[t(context, "skip")]]))
     return NOTES
 
 
@@ -109,7 +113,7 @@ async def get_notes(update, context):
     context.user_data["notes"] = "" if txt == t(context, "skip") else txt
     summary = format_summary(context)
     rows = [[t(context, "confirm_send"), t(context, "restart")]]
-    await update.message.reply_text(t(context, "summary_intro") + "\n\n" + summary, reply_markup=kb(rows), parse_mode="HTML")
+    await send(update, t(context, "summary_intro") + "\n\n" + summary, kb(rows))
     return CONFIRM
 
 
@@ -133,7 +137,7 @@ async def confirm(update, context):
         except Exception as e:
             logger.error(str(e))
 
-    await update.message.reply_text(t(context, "thanks"), reply_markup=ReplyKeyboardRemove(), parse_mode="HTML")
+    await send(update, t(context, "thanks"), ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
