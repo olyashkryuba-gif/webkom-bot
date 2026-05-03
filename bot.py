@@ -1,9 +1,5 @@
 """
 WebKom Telegram Bot
-====================
-Збирає інформацію про проект клієнта і пересилає заявку власнику.
-Підтримує 4 мови: CS / EN / RU / UK.
-Ніколи не називає ціну — лише фіксує що клієнт хоче.
 """
 
 import os
@@ -31,48 +27,34 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-(
-    LANG,
-    NAME,
-    SITE_TYPE,
-    GOAL,
-    PAGES,
-    DESIGN,
-    CONTENT,
-    EXAMPLES,
-    DEADLINE,
-    CONTACT,
-    NOTES,
-    CONFIRM,
-) = range(12)
+LANG, NAME, SITE_TYPE, GOAL, PAGES, DESIGN, CONTENT, EXAMPLES, DEADLINE, CONTACT, NOTES, CONFIRM = range(12)
 
 
-def t(context: ContextTypes.DEFAULT_TYPE, key: str) -> str:
+def t(context, key):
     lang = context.user_data.get("lang", "cs")
     return T.get(lang, T["cs"]).get(key, key)
 
 
-def kb(rows, one_time=True):
-    return ReplyKeyboardMarkup(rows, resize_keyboard=True, one_time_keyboard=one_time)
+def kb(rows):
+    return ReplyKeyboardMarkup(rows, resize_keyboard=True, one_time_keyboard=True)
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def start(update, context):
     context.user_data.clear()
     keyboard = [
-        [InlineKeyboardButton("🇨🇿 Čeština", callback_data="lang_cs"),
-         InlineKeyboardButton("🇬 English", callback_data="lang_en")],
-        [InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
-         InlineKeyboardButton("🇺🇦 Українська", callback_data="lang_uk")],
+        [InlineKeyboardButton("Cestina", callback_data="lang_cs"),
+         InlineKeyboardButton("English", callback_data="lang_en")],
+        [InlineKeyboardButton("Russian", callback_data="lang_ru"),
+         InlineKeyboardButton("Ukrainian", callback_data="lang_uk")],
     ]
     await update.message.reply_text(
-        "👋 Welcome to WebKom!\nVítejte! • Добро пожаловать! • Вітаємо!\n\n"
-        "Please choose your language / Vyberte jazyk:",
+        "Welcome to WebKom! Please choose your language:",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
     return LANG
 
 
-async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def set_language(update, context):
     query = update.callback_query
     await query.answer()
     lang = query.data.split("_")[1]
@@ -82,7 +64,7 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return NAME
 
 
-async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_name(update, context):
     context.user_data["name"] = update.message.text.strip()
     rows = [
         [t(context, "site_corp"), t(context, "site_landing")],
@@ -95,13 +77,13 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return SITE_TYPE
 
 
-async def get_site_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_site_type(update, context):
     context.user_data["site_type"] = update.message.text.strip()
     await update.message.reply_text(t(context, "ask_goal"), reply_markup=ReplyKeyboardRemove())
     return GOAL
 
 
-async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_goal(update, context):
     context.user_data["goal"] = update.message.text.strip()
     rows = [
         [t(context, "pages_1"), t(context, "pages_2_5")],
@@ -112,7 +94,7 @@ async def get_goal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return PAGES
 
 
-async def get_pages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_pages(update, context):
     context.user_data["pages"] = update.message.text.strip()
     rows = [
         [t(context, "design_have"), t(context, "design_need")],
@@ -122,7 +104,7 @@ async def get_pages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return DESIGN
 
 
-async def get_design(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_design(update, context):
     context.user_data["design"] = update.message.text.strip()
     rows = [
         [t(context, "content_have"), t(context, "content_partial")],
@@ -132,18 +114,16 @@ async def get_design(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return CONTENT
 
 
-async def get_content(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_content(update, context):
     context.user_data["content"] = update.message.text.strip()
     await update.message.reply_text(
         t(context, "ask_examples"),
-        reply_markup=ReplyKeyboardMarkup(
-            [[t(context, "skip")]], resize_keyboard=True, one_time_keyboard=True
-        ),
+        reply_markup=ReplyKeyboardMarkup([[t(context, "skip")]], resize_keyboard=True, one_time_keyboard=True),
     )
     return EXAMPLES
 
 
-async def get_examples(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_examples(update, context):
     txt = update.message.text.strip()
     context.user_data["examples"] = "" if txt == t(context, "skip") else txt
     rows = [
@@ -154,27 +134,25 @@ async def get_examples(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return DEADLINE
 
 
-async def get_deadline(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_deadline(update, context):
     context.user_data["deadline"] = update.message.text.strip()
     await update.message.reply_text(t(context, "ask_contact"), reply_markup=ReplyKeyboardRemove())
     return CONTACT
 
 
-async def get_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_contact(update, context):
     context.user_data["contact"] = update.message.text.strip()
     await update.message.reply_text(
         t(context, "ask_notes"),
-        reply_markup=ReplyKeyboardMarkup(
-            [[t(context, "skip")]], resize_keyboard=True, one_time_keyboard=True
-        ),
+        reply_markup=ReplyKeyboardMarkup([[t(context, "skip")]], resize_keyboard=True, one_time_keyboard=True),
     )
     return NOTES
 
 
-async def get_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def get_notes(update, context):
     txt = update.message.text.strip()
     context.user_data["notes"] = "" if txt == t(context, "skip") else txt
-    summary = format_summary(context, for_user=True)
+    summary = format_summary(context)
     rows = [[t(context, "confirm_send"), t(context, "restart")]]
     await update.message.reply_text(
         t(context, "summary_intro") + "\n\n" + summary,
@@ -184,21 +162,21 @@ async def get_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return CONFIRM
 
 
-async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def confirm(update, context):
     txt = update.message.text.strip()
     if txt == t(context, "restart"):
         await update.message.reply_text(t(context, "restarted"), reply_markup=ReplyKeyboardRemove())
         return await start(update, context)
 
-    owner_msg = format_summary(context, for_user=False)
+    owner_msg = format_summary(context)
     user = update.effective_user
+    username_part = " (@" + user.username + ")" if user.username else ""
     header = (
-        f"🔔 <b>Нова заявка WebKom</b>\n"
-        f"Від: <a href='tg://user?id={user.id}'>{user.full_name}</a>"
-        f"{(' (@' + user.username + ')') if user.username else ''}\n"
-        f"Час: {datetime.now().strftime('%d.%m.%Y %H:%M')}\n"
-        f"Мова анкети: {context.user_data.get('lang', 'cs').upper()}\n"
-        f"--------------------\n\n"
+        "Nova zayavka WebKom\n"
+        "Vid: " + user.full_name + username_part + "\n"
+        "Chas: " + datetime.now().strftime("%d.%m.%Y %H:%M") + "\n"
+        "Mova: " + context.user_data.get("lang", "cs").upper() + "\n"
+        "--------------------\n\n"
     )
 
     if OWNER_CHAT_ID:
@@ -209,7 +187,7 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="HTML",
             )
         except Exception as e:
-            logger.error(f"Не вдалося надіслати власнику: {e}")
+            logger.error("Failed to send to owner: " + str(e))
 
     await update.message.reply_text(
         t(context, "thanks"),
@@ -219,18 +197,30 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(
-        t(context, "cancelled") if context.user_data.get("lang") else "OK, cancelled.",
-        reply_markup=ReplyKeyboardRemove(),
-    )
+async def cancel(update, context):
+    msg = t(context, "cancelled") if context.user_data.get("lang") else "OK, cancelled."
+    await update.message.reply_text(msg, reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
-def format_summary(context: ContextTypes.DEFAULT_TYPE, for_user: bool) -> str:
+def format_summary(context):
     d = context.user_data
-    L = t
-    lines = [
-        f"<b>{L(context, 'sum_name')}:</b> {d.get('name', '-')}",
-        f"<b>{L(context, 'sum_site_type')}:</b> {d.get('site_type', '-')}",
-        f"<b>{L(context, 'sum_goal')}:</b> {d.get
+    lines = []
+    lines.append("<b>" + t(context, "sum_name") + ":</b> " + d.get("name", "-"))
+    lines.append("<b>" + t(context, "sum_site_type") + ":</b> " + d.get("site_type", "-"))
+    lines.append("<b>" + t(context, "sum_goal") + ":</b> " + d.get("goal", "-"))
+    lines.append("<b>" + t(context, "sum_pages") + ":</b> " + d.get("pages", "-"))
+    lines.append("<b>" + t(context, "sum_design") + ":</b> " + d.get("design", "-"))
+    lines.append("<b>" + t(context, "sum_content") + ":</b> " + d.get("content", "-"))
+    if d.get("examples"):
+        lines.append("<b>" + t(context, "sum_examples") + ":</b> " + d["examples"])
+    lines.append("<b>" + t(context, "sum_deadline") + ":</b> " + d.get("deadline", "-"))
+    lines.append("<b>" + t(context, "sum_contact") + ":</b> " + d.get("contact", "-"))
+    if d.get("notes"):
+        lines.append("<b>" + t(context, "sum_notes") + ":</b> " + d["notes"])
+    return "\n".join(lines)
+
+
+def main():
+    if BOT_TOKEN == "PASTE_YOUR_TOKEN_HERE":
+        print("Set BOT_TOKEN env vari
